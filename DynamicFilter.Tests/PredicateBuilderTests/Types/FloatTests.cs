@@ -1,7 +1,7 @@
 ﻿using System.Globalization;
 using System.Linq.Expressions;
 using DynamicFilter.Helpers;
-using DynamicFilter.Operations;
+using DynamicFilter.Models;
 using FluentAssertions;
 
 namespace DynamicFilter.Tests.PredicateBuilderTests.Types;

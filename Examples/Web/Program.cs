@@ -1,17 +1,13 @@
 using DynamicFilter;
-using DynamicFilter.Converters;
+using DynamicFilter.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Web.EF;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddControllers().AddJsonOptions(options =>
-{
-    options.JsonSerializerOptions.Converters.Add(new DynamicFilterJsonConverter());
-});
+builder.Services.AddControllers();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -50,11 +46,9 @@ namespace Web
         }
 
         [HttpPost("filter")]
-        public async Task<IActionResult> GetFiltered(Filter filter)
+        public IActionResult GetFiltered([FromBody] Operation[] filter)
         {
-            var products = await _dbcontext.Set<Product>().ApplyDynamicFilter(filter).OfType<object>().ToArrayAsync();
-
-            return Ok(products);
+            return Ok(_dbcontext.Set<Product>().ApplyDynamicFilter(filter));
         }
     }
 }

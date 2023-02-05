@@ -1,6 +1,6 @@
-﻿using DynamicFilter.Operations;
+﻿using DynamicFilter.Arguments;
+using DynamicFilter.Models;
 using FluentAssertions;
-using Newtonsoft.Json.Linq;
 
 namespace DynamicFilter.Tests;
 
@@ -9,50 +9,45 @@ public class DynamicFilterLinqExtensionsTests
     [Fact]
     public void ShouldFilter()
     {
-        var matchObject = new TestClass();
+        var obj = new TestClass();
 
-        var queryable = new[] { matchObject, new() }.AsQueryable();
+        var queryable = new[] { obj, new() }.AsQueryable();
 
-        var filter = new Filter
-        (
-            Operations: new OperationDescription[]
-            {
-                new 
+        var filter = new Operation[]
+        {
+            new
+            (
+                Name: "Where",
+                Arguments: new WhereArgs
                 (
-                    Name: "Where",
-                    Arguments: JObject.FromObject(new WhereOperation
-                    (
-                        Conditions: new[]
-                        {
-                            new Condition(nameof(TestClass.Id), new [] { matchObject.Id.ToString() }, SearchOperator.Equals)
-                        }
-                    ))
+                    Conditions: new[]
+                    {
+                        new Condition(nameof(TestClass.Id), new[] { obj.Id.ToString() }, SearchOperator.Equals)
+                    }
                 )
-            }
-        );
+            )
+        };
 
         var resultQueryable = queryable.ApplyDynamicFilter(filter);
 
-        resultQueryable.OfType<object>().Should().ContainSingle(x => x == matchObject);
+        resultQueryable.OfType<object>().Should().ContainSingle(x => x == obj);
     }
 
     [Fact]
     public void ShouldSelect()
     {
         var obj = new TestClass();
+
         var queryable = new[] { obj }.AsQueryable();
 
-        var filter = new Filter
-        (
-            Operations: new[]
-            {
-                new OperationDescription
-                (
-                    Name: "Select",
-                    Arguments: JArray.FromObject(new [] { nameof(TestClass.Id) })
-                )
-            }
-        );
+        var filter = new Operation[]
+        {
+            new
+            (
+                Name: "Select",
+                Arguments: new SelectArgs(new[] { nameof(TestClass.Id) })
+            )
+        };
 
         var resultQueryable = (IQueryable<Dictionary<string, object>>) queryable.ApplyDynamicFilter(filter);
 

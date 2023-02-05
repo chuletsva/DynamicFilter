@@ -16,7 +16,7 @@ public class BenchmarksRunner
     }
 
     [Fact]
-    public void RunAutoFilterBenchmarks()
+    public void RunDynamicFilterBenchmarks()
     {
         RunBenchmark<DynamicFilterBenchmarks>();
     }

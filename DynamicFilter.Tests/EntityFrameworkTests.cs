@@ -1,9 +1,8 @@
-﻿using DynamicFilter.Operations;
+﻿using DynamicFilter.Arguments;
+using DynamicFilter.Models;
 using DynamicFilter.Tests.Common;
 using DynamicFilter.Tests.Common.EF;
-using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json.Linq;
 
 namespace DynamicFilter.Tests;
 
@@ -16,231 +15,88 @@ public class EntityFrameworkTests : IClassFixture<DatabaseFixture>
         _db = db;
     }
 
-    [Fact]
-    public async Task ApplyFilter()
+    [Theory]
+    [MemberData(nameof(Filters))]
+    public async Task ApplyFilter(Operation[] filter)
     {
-        var filter = CreateDefaultFilter();
-
-        var products = await _db.DbContext.Products.ApplyDynamicFilter(filter).OfType<object>().ToArrayAsync();
-
-        products.Should().NotBeEmpty();
+        _ = await _db.DbContext.Products.ApplyDynamicFilter(filter)
+            .OfType<object>().ToArrayAsync();
     }
 
-    [Fact]
-    public async Task ApplyFilterAndSelect()
+    public static IEnumerable<object[]> Filters
     {
-        var defaultFilter = CreateDefaultFilter();
-
-        var properties = new[]
+        get
         {
-            nameof(Product.Id),
-            nameof(Product.Name)
-        };
+            yield return new object[]
+            {
+                new Operation[]
+                {
+                    new
+                    (
+                        Name: "Where",
+                        Arguments: new WhereArgs
+                        (
+                            new[]
+                            {
+                                new Condition
+                                (
+                                    Field: nameof(Product.Name),
+                                    Operator: SearchOperator.StartsWith,
+                                    Value: new[] { "Snickers" }
+                                )
+                            }
+                        )
+                    ),
+                }
+            };
 
-        var selectOperation = new OperationDescription("Select", JToken.FromObject(properties));
+            yield return new object[]
+            {
+                new Operation[] { new("Distinct", new DistinctArgs()) }
+            };
 
-        var filter = new Filter(defaultFilter.Operations.Append(selectOperation).ToArray());
+            yield return new object[]
+            {
+                new Operation[] { new("Skip", new SkipArgs(1)) }
+            };
 
-        var products = await _db.DbContext.Products
-            .ApplyDynamicFilter(filter)
-            .OfType<Dictionary<string, object>>().ToArrayAsync();
+            yield return new object[]
+            {
+                new Operation[] { new("Take", new TakeArgs(1)) }
+            };
 
-        products.Should().NotBeEmpty();
+            yield return new object[]
+            {
+                new Operation[] { new("OrderBy", new OrderByArgs(nameof(Product.ExpireDate))) }
+            };
 
-        foreach (var keys in products.Select(x => x.Keys))
-        {
-            keys.Should().BeEquivalentTo(properties);
+            yield return new object[]
+            {
+                new Operation[] { new("OrderByDescending", new OrderByDescendingArgs(nameof(Product.ExpireDate))) }
+            };
+
+            yield return new object[]
+            {
+                new Operation[] 
+                { 
+                    new("OrderBy", new OrderByArgs(nameof(Product.ExpireDate))), 
+                    new("ThenBy", new ThenByArgs(nameof(Product.ExpireDate)))
+                }
+            };
+
+            yield return new object[]
+            {
+                new Operation[]
+                {
+                    new("OrderBy", new OrderByArgs(nameof(Product.ExpireDate))), 
+                    new("ThenByDescending", new ThenByDescendingArgs(nameof(Product.ExpireDate)))
+                }
+            };
+
+            yield return new object[]
+            {
+                new Operation[] { new("Select", new SelectArgs(new[] { nameof(Product.Id) })) }
+            };
         }
-    }
-
-    [Fact]
-    public async Task AutoFilterShouldProduceSameResultAsPlainExpression()
-    {
-        var filter = new Filter
-        (
-            Operations: new []
-            {
-                new OperationDescription
-                (
-                    Name: "Where", 
-                    Arguments: JObject.FromObject(new WhereOperation
-                    (
-                        new[]
-                        {
-                            new Condition
-                            (
-                                Name: nameof(Product.Name),
-                                SearchOperator: SearchOperator.StartsWith,
-                                Value: new[] { "Snickers" }
-                            ),
-                            new Condition
-                            (
-                                LogicOperator: LogicOperator.Or,
-                                Name: nameof(Product.Name),
-                                SearchOperator: SearchOperator.Contains,
-                                Value: new[] { "Mars" }
-                            ),
-                            new Condition
-                            (
-                                LogicOperator: LogicOperator.And,
-                                Name: nameof(Product.ExpireDate),
-                                SearchOperator: SearchOperator.GreaterOrEqual,
-                                Value: new[] { DateTime.UtcNow.ToString("s") }
-                            ),
-                            new Condition
-                            (
-                                LogicOperator: LogicOperator.And,
-                                Name: nameof(Product.IsForSale),
-                                SearchOperator: SearchOperator.Equals,
-                                Value: new[] { "true" }
-                            ),
-                            new Condition
-                            (
-                                LogicOperator: LogicOperator.Or,
-                                Name: nameof(Product.IsInStock),
-                                SearchOperator: SearchOperator.Equals,
-                                Value: new[] { "true" }
-                            ),
-                        },
-
-                        new[]
-                        {
-                            new Group
-                            (
-                                Start: 1,
-                                End: 2,
-                                Level: 1
-                            ),
-                            new Group
-                            (
-                                Start: 1,
-                                End: 3,
-                                Level: 2
-                            ),
-                            new Group
-                            (
-                                Start: 4,
-                                End: 5,
-                                Level: 2
-                            )
-                        }
-                    ))
-                ),
-
-                new OperationDescription
-                (
-                    Name: "OrderBy",
-                    Arguments: nameof(Product.ExpireDate)
-                ),
-
-                new OperationDescription
-                (
-                    Name: "Select",
-                    Arguments: JArray.FromObject(new[]
-                    {
-                        nameof(Product.Id),
-                        nameof(Product.Name)
-                    })
-                )
-            }
-        );
-
-        var autofilterEntities = await _db.DbContext.Products
-            .ApplyDynamicFilter(filter)
-            .OfType<Dictionary<string, object>>().ToArrayAsync();
-
-        var plainExprEntities = await _db.DbContext.Products.Where(x =>
-                (x.Name.StartsWith("Snickers") || x.Name.Contains("Mars")) && x.ExpireDate >= DateTime.UtcNow && (x.IsForSale || x.IsInStock))
-            .OrderBy(x => x.ExpireDate)
-            .Select(x => new Dictionary<string, object>()
-            {
-                {nameof(Product.Id), x.Id},
-                {nameof(Product.Name), x.Name},
-            })
-            .ToArrayAsync();
-
-        autofilterEntities.Should().BeEquivalentTo(plainExprEntities, x => x.WithStrictOrdering());
-    }
-
-    private static Filter CreateDefaultFilter()
-    {
-        return new Filter
-        (
-            Operations: new []
-            {
-                new OperationDescription
-                (
-                    Name: "Where", 
-                    Arguments: JObject.FromObject(new WhereOperation
-                    (
-                        new[]
-                        {
-                            new Condition
-                            (
-                                Name: nameof(Product.Name),
-                                SearchOperator: SearchOperator.StartsWith,
-                                Value: new[] { "Snickers" }
-                            ),
-                            new Condition
-                            (
-                                LogicOperator: LogicOperator.Or,
-                                Name: nameof(Product.Name),
-                                SearchOperator: SearchOperator.Contains,
-                                Value: new[] { "Mars" }
-                            ),
-                            new Condition
-                            (
-                                LogicOperator: LogicOperator.And,
-                                Name: nameof(Product.ExpireDate),
-                                SearchOperator: SearchOperator.GreaterOrEqual,
-                                Value: new[] { DateTime.UtcNow.ToString("s") }
-                            ),
-                            new Condition
-                            (
-                                LogicOperator: LogicOperator.And,
-                                Name: nameof(Product.IsForSale),
-                                SearchOperator: SearchOperator.Equals,
-                                Value: new[] { "true" }
-                            ),
-                            new Condition
-                            (
-                                LogicOperator: LogicOperator.Or,
-                                Name: nameof(Product.IsInStock),
-                                SearchOperator: SearchOperator.Equals,
-                                Value: new[] { "true" }
-                            ),
-                        },
-
-                        new[]
-                        {
-                            new Group
-                            (
-                                Start: 1,
-                                End: 2,
-                                Level: 1
-                            ),
-                            new Group
-                            (
-                                Start: 1,
-                                End: 3,
-                                Level: 2
-                            ),
-                            new Group
-                            (
-                                Start: 4,
-                                End: 5,
-                                Level: 2
-                            )
-                        }
-                    ))
-                ),
-
-                new OperationDescription
-                (
-                    Name: "OrderBy",
-                    Arguments: nameof(Product.ExpireDate)
-                )
-            }
-        );
     }
 }

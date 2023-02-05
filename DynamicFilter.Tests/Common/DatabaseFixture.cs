@@ -6,7 +6,7 @@ namespace DynamicFilter.Tests.Common;
 
 public class DatabaseFixture : IAsyncLifetime
 {
-    public AppDbContext DbContext { get; private set; }
+    public AppDbContext DbContext { get; private set; } = null!;
 
     public async Task InitializeAsync()
     {

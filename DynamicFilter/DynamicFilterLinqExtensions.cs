@@ -1,16 +1,12 @@
 ﻿using System.Linq;
+using DynamicFilter.Models;
 
 namespace DynamicFilter;
 
 public static class DynamicFilterLinqExtensions
 {
-    public static IQueryable ApplyDynamicFilter(this IQueryable queryable, Filter filter)
+    public static IQueryable ApplyDynamicFilter(this IQueryable queryable, params Operation[] filter)
     {
-        return filter.Operations.Aggregate(queryable, (query, info) =>
-        {
-            var operation = OperationParser.Parse(info);
-
-            return OperationProcessor.ApplyOperation(query, operation);
-        });
+        return filter.Aggregate(queryable, OperationHandler.ApplyOperation);
     }
 }

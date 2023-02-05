@@ -1,10 +1,10 @@
 ﻿using AutoFixture;
-using DynamicFilter.Operations;
+using DynamicFilter.Arguments;
 using FluentAssertions;
 
 namespace DynamicFilter.Tests;
 
-public class OperationProcessorTests
+public class OperationHandlerTests
 {
     private readonly Fixture _fixture = new();
 
@@ -15,9 +15,7 @@ public class OperationProcessorTests
 
         var queryable = new[] { obj, obj }.AsQueryable();
 
-        var operation = new DistinctOperation();
-
-        queryable = (IQueryable<TestClass>)OperationProcessor.Distinct(queryable, operation);
+        queryable = (IQueryable<TestClass>)OperationHandler.Distinct(queryable);
 
         queryable.Should().HaveCount(1);
     }
@@ -27,9 +25,9 @@ public class OperationProcessorTests
     {
         IQueryable query = new Fixture().CreateMany<TestClass>().AsQueryable();
 
-        var operation = new SelectOperation(new[] { nameof(TestClass.Bool) });
+        var args = new SelectArgs(new[] { nameof(TestClass.Bool) });
 
-        query = OperationProcessor.Select(query, operation);
+        query = OperationHandler.Select(query, args);
 
         query.ElementType.Should().Be(typeof(Dictionary<string, object>));
     }
@@ -41,9 +39,9 @@ public class OperationProcessorTests
 
         var expectedQuery = sourceQuery.Skip(500);
 
-        var operation = new SkipOperation(500);
+        var args = new SkipArgs(500);
 
-        IQueryable actualQuery = OperationProcessor.Skip(sourceQuery, operation);
+        IQueryable actualQuery = OperationHandler.Skip(sourceQuery, args);
 
         actualQuery.Should().BeEquivalentTo(expectedQuery, options => options.WithStrictOrdering());
     }
@@ -55,9 +53,9 @@ public class OperationProcessorTests
 
         var expectedQuery = sourceQuery.Take(500);
 
-        var operation = new TakeOperation(500);
+        var args = new TakeArgs(500);
 
-        var actualQuery = OperationProcessor.Take(sourceQuery, operation);
+        var actualQuery = OperationHandler.Take(sourceQuery, args);
 
         actualQuery.Should().BeEquivalentTo(expectedQuery, options => options.WithStrictOrdering());
     }
@@ -67,9 +65,9 @@ public class OperationProcessorTests
     {
         var query = _fixture.CreateMany<TestClass>(1000).AsQueryable();
 
-        var operation = new OrderByOperation(nameof(TestClass.Int1));
+        var args = new OrderByArgs(nameof(TestClass.Int1));
 
-        query = (IQueryable<TestClass>)OperationProcessor.OrderBy(query, operation);
+        query = (IQueryable<TestClass>)OperationHandler.OrderBy(query, args);
 
         query.Should().BeInAscendingOrder(x => x.Int1);
     }
@@ -79,9 +77,9 @@ public class OperationProcessorTests
     {
         var query = _fixture.CreateMany<TestClass>(1000).AsQueryable();
 
-        var operation = new OrderByDescendingOperation(nameof(TestClass.Int1));
+        var args = new OrderByDescendingArgs(nameof(TestClass.Int1));
 
-        query = (IQueryable<TestClass>)OperationProcessor.OrderByDescending(query, operation);
+        query = (IQueryable<TestClass>)OperationHandler.OrderByDescending(query, args);
 
         query.Should().BeInDescendingOrder(x => x.Int1);
     }
@@ -91,13 +89,13 @@ public class OperationProcessorTests
     {
         var query = _fixture.CreateMany<TestClass>(1000).AsQueryable();
 
-        var orderBy = new OrderByOperation(nameof(TestClass.Int1));
+        var orderByArgs = new OrderByArgs(nameof(TestClass.Int1));
 
-        query = (IQueryable<TestClass>)OperationProcessor.OrderBy(query, orderBy);
+        query = (IQueryable<TestClass>)OperationHandler.OrderBy(query, orderByArgs);
 
-        var thenBy = new ThenByOperation(nameof(TestClass.Int2));
+        var thenByArgs = new ThenByArgs(nameof(TestClass.Int2));
 
-        query = (IQueryable<TestClass>)OperationProcessor.ThenBy(query, thenBy);
+        query = (IQueryable<TestClass>)OperationHandler.ThenBy(query, thenByArgs);
 
         query.Should().BeInAscendingOrder(x => x.Int1).And.ThenBeInAscendingOrder(x => x.Int2);
     }
@@ -107,13 +105,13 @@ public class OperationProcessorTests
     {
         var query = _fixture.CreateMany<TestClass>(1000).AsQueryable();
 
-        var orderBy = new OrderByOperation(nameof(TestClass.Int1));
+        var orderByArgs = new OrderByArgs(nameof(TestClass.Int1));
 
-        query = (IQueryable<TestClass>)OperationProcessor.OrderBy(query, orderBy);
+        query = (IQueryable<TestClass>)OperationHandler.OrderBy(query, orderByArgs);
 
-        var thenByDescending = new ThenByDescendingOperation(nameof(TestClass.Int2));
+        var thenByDescendingArgs = new ThenByDescendingArgs(nameof(TestClass.Int2));
 
-        query = (IQueryable<TestClass>)OperationProcessor.ThenByDescending(query, thenByDescending);
+        query = (IQueryable<TestClass>)OperationHandler.ThenByDescending(query, thenByDescendingArgs);
 
         query.Should().BeInAscendingOrder(x => x.Int1).And.ThenBeInDescendingOrder(x => x.Int2);
     }

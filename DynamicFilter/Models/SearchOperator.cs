@@ -1,16 +1,4 @@
-﻿namespace DynamicFilter.Operations;
-
-public sealed record WhereOperation(Condition[] Conditions, Group[] Groups = default) : OperationBase;
-
-public sealed record Condition(string Name, string[] Value, SearchOperator SearchOperator, LogicOperator? LogicOperator = default);
-
-public sealed record Group(int Start, int End, int Level);
-
-public enum LogicOperator
-{
-    And = 1,
-    Or = 2
-}
+﻿namespace DynamicFilter.Models;
 
 public enum SearchOperator
 {

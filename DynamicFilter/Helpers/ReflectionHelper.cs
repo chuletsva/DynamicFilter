@@ -10,14 +10,6 @@ internal static class ReflectionHelper
 {
     private static readonly ConcurrentDictionary<Type, IReadOnlyDictionary<string, PropertyInfo>> PropertiesCache = new();
 
-    private static readonly HashSet<Type> ComparableTypes = new()
-    {
-        typeof(long), typeof(int), typeof(short),
-        typeof(decimal), typeof(double), typeof(float),
-        typeof(byte), typeof(char),
-        typeof(DateTime), typeof(DateTimeOffset)
-    };
-
     public static PropertyInfo GetProperty(Type type, string propertyName)
     {
         var properties = PropertiesCache.GetOrAdd(type, t => t.GetProperties().ToDictionary(p => p.Name));
@@ -47,7 +39,9 @@ internal static class ReflectionHelper
 
     public static bool IsComparable(Type type)
     {
-        return ComparableTypes.Contains(Nullable.GetUnderlyingType(type) ?? type);
+        type = Nullable.GetUnderlyingType(type) ?? type;
+
+        return typeof(IComparable).IsAssignableFrom(type);
     }
 
     public static bool CanBeNull(Type type)

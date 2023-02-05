@@ -1,6 +1,7 @@
 ﻿using System.Linq.Expressions;
+using DynamicFilter.Arguments;
 using DynamicFilter.Helpers;
-using DynamicFilter.Operations;
+using DynamicFilter.Models;
 using DynamicFilter.Tests.Common;
 using FluentAssertions;
 
@@ -10,7 +11,7 @@ public class PredicateTests
 {
     [Theory]
     [MemberData(nameof(TestCases))]
-    public void ShouldGenerateValidExpression(string expectedExpression, WhereOperation filter)
+    public void ShouldGenerateValidExpression(string expectedExpression, WhereArgs filter)
     {
         var lambda = (Expression<Func<TestClass, bool>>)
             PredicateBuilder.BuildPredicate(typeof(TestClass), filter.Conditions, filter.Groups);
@@ -29,7 +30,7 @@ public class PredicateTests
             yield return new object[]
             {
                 "1 and 2",
-                new WhereOperation
+                new WhereArgs
                 (
                     new[]
                     {
@@ -42,7 +43,7 @@ public class PredicateTests
             yield return new object[]
             {
                 "1 or 2",
-                new WhereOperation
+                new WhereArgs
                 (
                     new[]
                     {
@@ -57,7 +58,7 @@ public class PredicateTests
             yield return new object[]
             {
                 "(1 and 2) and 3",
-                new WhereOperation
+                new WhereArgs
                 (
                     new[]
                     {
@@ -71,7 +72,7 @@ public class PredicateTests
             yield return new object[]
             {
                 "(1 or 2) or 3",
-                new WhereOperation
+                new WhereArgs
                 (
                     new[]
                     {
@@ -85,7 +86,7 @@ public class PredicateTests
             yield return new object[]
             {
                 "(1 and 2) or 3",
-                new WhereOperation
+                new WhereArgs
                 (
                     new[]
                     {
@@ -99,7 +100,7 @@ public class PredicateTests
             yield return new object[]
             {
                 "1 or (2 and 3)",
-                new WhereOperation
+                new WhereArgs
                 (
                     new[]
                     {
@@ -115,7 +116,7 @@ public class PredicateTests
             yield return new object[]
             {
                 "((1 and 2) and 3) and 4",
-                new WhereOperation
+                new WhereArgs
                 (
                     new[]
                     {
@@ -130,7 +131,7 @@ public class PredicateTests
             yield return new object[]
             {
                 "((1 or 2) or 3) or 4",
-                new WhereOperation
+                new WhereArgs
                 (
                     new[]
                     {
@@ -145,7 +146,7 @@ public class PredicateTests
             yield return new object[]
             {
                 "((1 and 2) or 3) and 4",
-                new WhereOperation
+                new WhereArgs
                 (
                     new[]
                     {
@@ -170,7 +171,7 @@ public class PredicateTests
             yield return new object[]
             {
                 "1 and ((2 and 3) or 4)",
-                new WhereOperation
+                new WhereArgs
                 (
                     new[]
                     {
@@ -197,7 +198,7 @@ public class PredicateTests
             yield return new object[]
             {
                 "(1 and ((2 or 3) or 4)) and 5",
-                new WhereOperation
+                new WhereArgs
                 (
                     new[]
                     {
@@ -223,7 +224,7 @@ public class PredicateTests
             yield return new object[]
             {
                 "((1 and 2) or (3 and 4)) or 5",
-                new WhereOperation
+                new WhereArgs
                 (
                     new[]
                     {
@@ -261,7 +262,7 @@ public class PredicateTests
             yield return new object[]
             {
                 "((1 or 2) and (3 or 4)) and 5",
-                new WhereOperation
+                new WhereArgs
                 (
                     new[]
                     {
@@ -301,7 +302,7 @@ public class PredicateTests
             yield return new object[]
             {
                 "(1 or (2 and 3)) or ((4 and 5) or 6)",
-                new WhereOperation
+                new WhereArgs
                 (
                     new[]
                     {
@@ -334,7 +335,7 @@ public class PredicateTests
             yield return new object[]
             {
                 "(1 and ((2 or 3) and (4 or 5))) and 6",
-                new WhereOperation
+                new WhereArgs
                 (
                     new[]
                     {
@@ -373,7 +374,7 @@ public class PredicateTests
             yield return new object[]
             {
                 "(1 or ((2 and 3) or (4 and 5))) or 6",
-                new WhereOperation
+                new WhereArgs
                 (
                     new[]
                     {
@@ -414,7 +415,7 @@ public class PredicateTests
             yield return new object[]
             {
                 "(1 and (2 or (3 and 4))) or (((5 and 6) or 7) and 8)",
-                new WhereOperation
+                new WhereArgs
                 (
                     new[]
                     {
@@ -449,7 +450,7 @@ public class PredicateTests
             yield return new object[]
             {
                 "((1 and (2 or 3)) and 4) or ((5 and (6 or 7)) and 8)",
-                new WhereOperation
+                new WhereArgs
                 (
                     new[]
                     {

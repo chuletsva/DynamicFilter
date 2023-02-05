@@ -1,10 +1,10 @@
 ﻿using System.Linq.Expressions;
-using DynamicFilter.Operations;
+using DynamicFilter.Models;
 
 namespace DynamicFilter.Nodes;
 
 internal interface INode
 {
-    LogicOperator? Operator { get; }
+    LogicOperator? Logic { get; }
     Expression BuildExpression();
 }

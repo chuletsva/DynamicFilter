@@ -15,21 +15,21 @@ internal static class ValueConverter
         [typeof(DateTimeOffset?)] = ConvertDateTimeOffset
     };
 
-    public static object ConvertArray(string[] value, Type elementType)
+    public static object ConvertArray(string?[] value, Type elementType)
     {
         var arr = Array.CreateInstance(elementType, value.Length);
 
         for (int i = 0; i < value.Length; i++)
         {
-            var condValue = ConvertValue(value[i], elementType);
+            var converted = ConvertValue(value[i], elementType);
 
-            arr.SetValue(condValue, i);
+            arr.SetValue(converted, i);
         }
 
         return arr;
     }
 
-    public static object ConvertValue(string value, Type destinationType)
+    public static object? ConvertValue(string? value, Type destinationType)
     {
         if (value is null) return null;
 
@@ -64,6 +64,6 @@ internal static class ValueConverter
 
     private static object ConvertDateTimeOffset(string value)
     {
-        return DateTimeOffset.Parse(value, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeLocal);
+        return DateTimeOffset.Parse(value, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal | DateTimeStyles.AdjustToUniversal);
     }
 }

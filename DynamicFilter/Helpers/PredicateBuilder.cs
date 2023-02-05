@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using DynamicFilter.Models;
 using DynamicFilter.Nodes;
-using DynamicFilter.Operations;
 
 namespace DynamicFilter.Helpers;
 
 internal static class PredicateBuilder
 {
-    public static LambdaExpression BuildPredicate(Type elementType, Condition[] conditions, Group[] groups = default)
+    public static LambdaExpression BuildPredicate(Type elementType, Condition[] conditions, Group[]? groups = default)
     {
         Group rootGroup = new
         (
@@ -83,6 +83,6 @@ internal static class PredicateBuilder
             }
         }
 
-        return new GroupNode(nodes, conditions[parentGroup.Start - 1].LogicOperator);
+        return new GroupNode(nodes, conditions[parentGroup.Start - 1].Logic);
     }
 }

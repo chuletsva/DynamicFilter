@@ -2,7 +2,7 @@
 using System.Linq.Expressions;
 using System.Reflection;
 using DynamicFilter.Helpers;
-using DynamicFilter.Operations;
+using DynamicFilter.Models;
 using static DynamicFilter.Helpers.ValueConverter;
 
 namespace DynamicFilter.Nodes;
@@ -12,7 +12,7 @@ internal sealed class SingleNode : INode
     private readonly Condition _condition;
     private readonly ParameterExpression _paramExpr;
 
-    public LogicOperator? Operator => _condition.LogicOperator;
+    public LogicOperator? Logic => _condition.Logic;
 
     public SingleNode(Condition condition, ParameterExpression paramExpr)
     {
@@ -22,13 +22,13 @@ internal sealed class SingleNode : INode
 
     public Expression BuildExpression()
     {
-        PropertyInfo property = ReflectionHelper.GetProperty(_paramExpr.Type, _condition.Name);
+        PropertyInfo property = ReflectionHelper.GetProperty(_paramExpr.Type, _condition.Field);
 
         MemberExpression propExpr = Expression.Property(_paramExpr, property);
 
         Expression predicateExpr;
 
-        switch (_condition.SearchOperator)
+        switch (_condition.Operator)
         {
             case SearchOperator.Equals:
                 {
@@ -167,19 +167,19 @@ internal sealed class SingleNode : INode
                 }
 
             default:
-                throw new Exception($"Operator '{_condition.SearchOperator}' is not supported for type '{property.PropertyType.Name}'");
+                throw new Exception($"Operator '{_condition.Operator}' is not supported for type '{property.PropertyType.Name}'");
         }
 
         return predicateExpr;
     }
 
-    private (object Value, Expression ValueExpr) BuildSingleValueExpression(PropertyInfo property)
+    private (object? Value, Expression ValueExpr) BuildSingleValueExpression(PropertyInfo property)
     {
-        string originalValue = _condition.Value[0];
+        string? originalValue = _condition.Value[0];
 
         try
         {
-            object value = ConvertValue(originalValue, property.PropertyType);
+            object? value = ConvertValue(originalValue, property.PropertyType);
 
             Expression valueExpr = Expression.Constant(value, property.PropertyType);
 
@@ -190,7 +190,7 @@ internal sealed class SingleNode : INode
             throw new Exception($"Property '{property.Name}' from type '{property.DeclaringType?.Name}' is not compatible with {getInvalidValueAlias(originalValue)}");
         }
 
-        static string getInvalidValueAlias(object value)
+        static string getInvalidValueAlias(object? value)
         {
             return value switch
             {
