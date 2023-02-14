@@ -1,3 +1,3 @@
 ﻿namespace DynamicFilter.Arguments;
 
-public sealed record SelectArgs(string[] Properties) : ArgsBase;
+public sealed record SelectArgs(string[] Fields, bool SingleField = false) : ArgsBase;

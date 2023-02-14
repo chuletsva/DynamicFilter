@@ -7,7 +7,7 @@ using DynamicFilter.Models;
 
 namespace DynamicFilter.Converters;
 
-public class OperationJsonNetConverter : JsonConverter<Operation>
+internal class OperationJsonNetConverter : JsonConverter<Operation>
 {
     internal static readonly JsonSerializerOptions _serializerOptions = new()
     {
@@ -26,14 +26,14 @@ public class OperationJsonNetConverter : JsonConverter<Operation>
 
         string name = jsonNode[nameof(Operation.Name)]?.ToString().ToLower() ?? throw new JsonException();
 
-        JsonNode argumentsJson = jsonNode[nameof(Operation.Arguments)] ?? throw new JsonException();
+        JsonNode? argumentsJson = jsonNode[nameof(Operation.Arguments)];
 
         ArgsBase arguments = ParseArguments(name, argumentsJson);
 
         return new Operation(name, arguments);
     }
 
-    private static ArgsBase ParseArguments(string operationName, JsonNode argumentsJson)
+    private static ArgsBase ParseArguments(string operationName, JsonNode? argumentsJson)
     {
         switch (operationName)
         {
@@ -63,37 +63,71 @@ public class OperationJsonNetConverter : JsonConverter<Operation>
 
             case "orderby":
             {
-                var propertyName = getValue<string>();
+                if (argumentsJson is null)
+                {
+                    return new OrderByArgs();
+                }
 
-                return new OrderByArgs(propertyName);
+                var fieldName = getValue<string?>();
+
+                return new OrderByArgs(fieldName);
             }
 
             case "orderbydescending":
             {
-                var propertyName = getValue<string>();
+                if (argumentsJson is null)
+                {
+                    return new OrderByDescendingArgs();
+                }
 
-                return new OrderByDescendingArgs(propertyName);
+                var fieldName = getValue<string>();
+
+                return new OrderByDescendingArgs(fieldName);
             }
 
             case "thenby":
             {
-                var propertyName = getValue<string>();
+                if (argumentsJson is null)
+                {
+                    return new ThenByArgs();
+                }
 
-                return new ThenByArgs(propertyName);
+                var fieldName = getValue<string>();
+
+                return new ThenByArgs(fieldName);
             }
 
             case "thenbydescending":
             {
-                var propertyName = getValue<string>();
+                if (argumentsJson is null)
+                {
+                    return new ThenByDescendingArgs();
+                }
 
-                return new ThenByDescendingArgs(propertyName);
+                var fieldName = getValue<string>();
+
+                return new ThenByDescendingArgs(fieldName);
             }
 
             case "select":
             {
-                var properties = getValue<string[]>();
+                switch (argumentsJson)
+                {
+                    case JsonArray:
+                    {
+                        var fields = getValue<string[]>();
 
-                return new SelectArgs(properties);
+                        return new SelectArgs(fields);
+                    }
+                    case JsonValue:
+                    {
+                        var field = getValue<string>();
+
+                        return new SelectArgs(new[] { field }, true);
+                    }
+                    default:
+                        throw new JsonException();
+                }
             }
 
             default: throw new ArgumentOutOfRangeException(nameof(operationName));

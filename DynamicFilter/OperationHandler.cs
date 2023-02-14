@@ -84,104 +84,149 @@ internal static class OperationHandler
 
     internal static IQueryable OrderBy(IQueryable queryable, OrderByArgs args)
     {
-        if (string.IsNullOrWhiteSpace(args.PropertyName))
+        if (args.FieldName is null)
         {
-            throw new DynamicFilterException("OrderBy argument should not be empty");
+            MethodInfo method = QueryableMethods.OrderBy(queryable.ElementType, queryable.ElementType);
+
+            return ApplySorting(queryable, method);
         }
+        else
+        {
+            PropertyInfo property = ReflectionHelper.GetProperty(queryable.ElementType, args.FieldName);
 
-        PropertyInfo property = ReflectionHelper.GetProperty(queryable.ElementType, args.PropertyName);
+            MethodInfo method = QueryableMethods.OrderBy(queryable.ElementType, property.PropertyType);
 
-        MethodInfo method = QueryableMethods.OrderBy(queryable.ElementType, property.PropertyType);
-
-        return ApplySorting(queryable, method, property);
+            return ApplySorting(queryable, method, property);
+        }
     }
 
     internal static IQueryable OrderByDescending(IQueryable queryable, OrderByDescendingArgs args)
     {
-        if (string.IsNullOrWhiteSpace(args.PropertyName))
+        if (args.FieldName is null)
         {
-            throw new DynamicFilterException("OrderByDescending argument should not be empty");
+            MethodInfo method = QueryableMethods.OrderByDescending(queryable.ElementType, queryable.ElementType);
+
+            return ApplySorting(queryable, method);
         }
+        else
+        {
+            PropertyInfo property = ReflectionHelper.GetProperty(queryable.ElementType, args.FieldName);
 
-        PropertyInfo property = ReflectionHelper.GetProperty(queryable.ElementType, args.PropertyName);
+            MethodInfo method = QueryableMethods.OrderByDescending(queryable.ElementType, property.PropertyType);
 
-        MethodInfo method = QueryableMethods.OrderByDescending(queryable.ElementType, property.PropertyType);
-
-        return ApplySorting(queryable, method, property);
+            return ApplySorting(queryable, method, property);
+        }
     }
 
     internal static IQueryable ThenBy(IQueryable queryable, ThenByArgs args)
     {
-        if (string.IsNullOrWhiteSpace(args.PropertyName))
+        if (args.FieldName is null)
         {
-            throw new DynamicFilterException("ThenBy argument should not be empty");
+            MethodInfo method = QueryableMethods.ThenBy(queryable.ElementType, queryable.ElementType);
+
+            return ApplySorting(queryable, method);
         }
+        else
+        {
+            PropertyInfo property = ReflectionHelper.GetProperty(queryable.ElementType, args.FieldName);
 
-        PropertyInfo property = ReflectionHelper.GetProperty(queryable.ElementType, args.PropertyName);
+            MethodInfo method = QueryableMethods.ThenBy(queryable.ElementType, property.PropertyType);
 
-        MethodInfo method = QueryableMethods.ThenBy(queryable.ElementType, property.PropertyType);
-
-        return ApplySorting(queryable, method, property);
+            return ApplySorting(queryable, method, property);
+        }
     }
 
     internal static IQueryable ThenByDescending(IQueryable queryable, ThenByDescendingArgs args)
     {
-        if (string.IsNullOrWhiteSpace(args.PropertyName))
+        if (args.FieldName is null)
         {
-            throw new DynamicFilterException("ThenByDescending argument should not be empty");
+            MethodInfo method = QueryableMethods.ThenByDescending(queryable.ElementType, queryable.ElementType);
+
+            return ApplySorting(queryable, method);
         }
+        else
+        {
+            PropertyInfo property = ReflectionHelper.GetProperty(queryable.ElementType, args.FieldName);
 
-        PropertyInfo property = ReflectionHelper.GetProperty(queryable.ElementType, args.PropertyName);
+            MethodInfo method = QueryableMethods.ThenByDescending(queryable.ElementType, property.PropertyType);
 
-        MethodInfo method = QueryableMethods.ThenByDescending(queryable.ElementType, property.PropertyType);
-
-        return ApplySorting(queryable, method, property);
+            return ApplySorting(queryable, method, property);
+        }
     }
 
-    internal static IQueryable ApplySorting(IQueryable queryable, MethodInfo method, PropertyInfo property)
+    internal static IQueryable ApplySorting(IQueryable queryable, MethodInfo method, PropertyInfo? property = null)
     {
         ParameterExpression paramExpr = Expression.Parameter(queryable.ElementType, "x");
-        MemberExpression propExpr = Expression.Property(paramExpr, property);
-        Expression keySelector = Expression.Lambda(propExpr, paramExpr);
 
-        var sortedQueryable = method.Invoke(null, new object[] { queryable, keySelector }) ?? throw new NullReferenceException();
+        object sortedQueryable;
+
+        if (property is null)
+        {
+            LambdaExpression lambdaExpr = Expression.Lambda(paramExpr, paramExpr);
+
+            sortedQueryable = method.Invoke(null, new object[] { queryable, lambdaExpr }) ?? throw new NullReferenceException();
+        }
+        else
+        {
+            MemberExpression propExpr = Expression.Property(paramExpr, property);
+            LambdaExpression lambdaExpr = Expression.Lambda(propExpr, paramExpr);
+
+            sortedQueryable = method.Invoke(null, new object[] { queryable, lambdaExpr }) ?? throw new NullReferenceException();
+        }
 
         return (IQueryable)sortedQueryable;
     }
 
     internal static IQueryable Select(IQueryable queryable, SelectArgs args)
     {
-        if (args.Properties.Length is 0)
+        if (args.Fields.Length is 0)
         {
             throw new DynamicFilterException("Select arguments must contain at least one value");
         }
 
-        if (args.Properties.Any(string.IsNullOrWhiteSpace))
+        if (args.Fields.Any(string.IsNullOrWhiteSpace))
         {
             throw new DynamicFilterException("Select arguments should not contain empty values");
         }
 
-        var properties = ReflectionHelper.GetProperties(queryable.ElementType, args.Properties).ToArray();
-
         ParameterExpression paramExpr = Expression.Parameter(queryable.ElementType, "x");
 
-        Type dictType = typeof(Dictionary<string, object>);
+        object selectQueryable;
 
-        var addMethod = dictType.GetMethod("Add") ?? throw new NullReferenceException();
+        if (args.SingleField)
+        {
+            PropertyInfo property = ReflectionHelper.GetProperty(queryable.ElementType, args.Fields[0]);
 
-        ListInitExpression bodyExpr = Expression.ListInit(
-            Expression.New(dictType),
-            properties.Select(x => Expression.ElementInit(
-                addMethod,
-                Expression.Constant(x.Name),
-                Expression.Convert(Expression.Property(paramExpr, x), typeof(object)))));
+            MemberExpression bodyExpr = Expression.Property(paramExpr, property);
 
-        MethodInfo method = QueryableMethods.Select(queryable.ElementType, dictType);
+            MethodInfo method = QueryableMethods.Select(queryable.ElementType, property.PropertyType);
 
-        LambdaExpression lambdaExpr = Expression.Lambda(bodyExpr, paramExpr);
+            LambdaExpression lambdaExpr = Expression.Lambda(bodyExpr, paramExpr);
 
-        var selectQueryable = method.Invoke(null, new object[] { queryable, lambdaExpr }) ?? throw new NullReferenceException();
+            selectQueryable = method.Invoke(null, new object[] { queryable, lambdaExpr }) ?? throw new NullReferenceException();
+        }
+        else
+        {
+            var properties = ReflectionHelper.GetProperties(queryable.ElementType, args.Fields).ToArray();
 
-        return (IQueryable)selectQueryable;
+            Type dictType = typeof(Dictionary<string, object>);
+
+            var addMethod = dictType.GetMethod("Add") ?? throw new NullReferenceException();
+
+            ListInitExpression bodyExpr = Expression.ListInit(
+                Expression.New(dictType),
+                properties.Select(x => Expression.ElementInit(
+                    addMethod,
+                    Expression.Constant(x.Name),
+                    Expression.Convert(Expression.Property(paramExpr, x), typeof(object)))));
+
+            MethodInfo method = QueryableMethods.Select(queryable.ElementType, dictType);
+
+            LambdaExpression lambdaExpr = Expression.Lambda(bodyExpr, paramExpr);
+
+            selectQueryable = method.Invoke(null, new object[] { queryable, lambdaExpr }) ?? throw new NullReferenceException();
+        }
+
+        return (IQueryable) selectQueryable;
     }
 }

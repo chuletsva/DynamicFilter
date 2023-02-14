@@ -97,6 +97,11 @@ public class EntityFrameworkTests : IClassFixture<DatabaseFixture>
             {
                 new Operation[] { new("Select", new SelectArgs(new[] { nameof(Product.Id) })) }
             };
+
+            yield return new object[]
+            {
+                new Operation[] { new("Select", new SelectArgs(new[] { nameof(Product.Id) })) }
+            };
         }
     }
 }

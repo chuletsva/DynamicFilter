@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using DynamicFilter.Arguments;
 using DynamicFilter.Models;
 using Newtonsoft.Json;
@@ -10,18 +11,18 @@ internal class OperationNewtonsoftJsonConverter : JsonConverter<Operation>
 {
     public override Operation? ReadJson(JsonReader reader, Type objectType, Operation? existingValue, bool hasExistingValue, JsonSerializer serializer)
     {
-        var jobject = JObject.Load(reader);
+        JObject jobject = JObject.Load(reader);
 
         string name = jobject.GetValue(nameof(Operation.Name), StringComparison.OrdinalIgnoreCase)?.ToString().ToLower() ?? throw new JsonException();
 
-        var argumentsJson = jobject.GetValue(nameof(Operation.Arguments), StringComparison.OrdinalIgnoreCase) ?? throw new JsonException();
+        JToken? argumentsJson = jobject.GetValue(nameof(Operation.Arguments), StringComparison.OrdinalIgnoreCase);
 
         ArgsBase arguments = ParseArguments(name, argumentsJson);
 
         return new Operation(name, arguments);
     }
 
-    private static ArgsBase ParseArguments(string operationName, JToken argumentsJson)
+    private static ArgsBase ParseArguments(string operationName, JToken? argumentsJson)
     {
         switch (operationName)
         {
@@ -51,37 +52,71 @@ internal class OperationNewtonsoftJsonConverter : JsonConverter<Operation>
 
             case "orderby":
             {
-                var propertyName = getValue<string>();
+                if (argumentsJson is null)
+                {
+                    return new OrderByArgs();
+                }
 
-                return new OrderByArgs(propertyName);
+                var fieldName = getValue<string>();
+
+                return new OrderByArgs(fieldName);
             }
 
             case "orderbydescending":
             {
-                var propertyName = getValue<string>();
+                if (argumentsJson is null)
+                {
+                    return new OrderByDescendingArgs();
+                }
 
-                return new OrderByDescendingArgs(propertyName);
+                var fieldName = getValue<string>();
+
+                return new OrderByDescendingArgs(fieldName);
             }
 
             case "thenby":
             {
-                var propertyName = getValue<string>();
+                if (argumentsJson is null)
+                {
+                    return new ThenByArgs();
+                }
 
-                return new ThenByArgs(propertyName);
+                var fieldName = getValue<string>();
+
+                return new ThenByArgs(fieldName);
             }
 
             case "thenbydescending":
             {
-                var propertyName = getValue<string>();
+                if (argumentsJson is null)
+                {
+                    return new ThenByDescendingArgs();
+                }
 
-                return new ThenByDescendingArgs(propertyName);
+                var fieldName = getValue<string>();
+
+                return new ThenByDescendingArgs(fieldName);
             }
 
             case "select":
             {
-                var properties = getValue<string[]>();
+                switch (argumentsJson?.Type)
+                {
+                    case JTokenType.Array:
+                    {
+                        var fields = getValue<string[]>();
 
-                return new SelectArgs(properties);
+                        return new SelectArgs(fields);
+                    }
+                    case JTokenType.String:
+                    {
+                        var field = getValue<string>();
+
+                        return new SelectArgs(new[] { field }, true);
+                    }
+                    default:
+                        throw new JsonException();
+                }
             }
 
             default: throw new ArgumentOutOfRangeException(nameof(operationName));
@@ -89,6 +124,11 @@ internal class OperationNewtonsoftJsonConverter : JsonConverter<Operation>
 
         T getValue<T>()
         {
+            if (argumentsJson is null)
+            {
+                throw new JsonException();
+            }
+
             return argumentsJson.ToObject<T>() ?? throw new JsonException();
         }
     }

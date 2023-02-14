@@ -1,3 +1,3 @@
 ﻿namespace DynamicFilter.Arguments;
 
-public sealed record OrderByDescendingArgs(string PropertyName) : ArgsBase;
+public sealed record OrderByDescendingArgs(string? FieldName = null) : ArgsBase;

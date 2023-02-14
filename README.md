@@ -1,4 +1,4 @@
-﻿# DynamicFilter
+﻿﻿# DynamicFilter
 ![Nuget](https://img.shields.io/nuget/v/ART4S.DynamicFilter)
 
 DynamicFilter allows to use essential linq filtering methods on frontend side.
@@ -120,11 +120,27 @@ _dbcontext.Set<Product>()
     });
 ```
 
+At this point following operators are available to use in Where predicate:
+```
+    Equals
+    NotEqual
+    Any
+    Greater
+    GreaterOrEqual
+    Less
+    LessOrEqual
+    Exists
+    NotExists
+    StartsWith
+    EndsWith
+    Contains
+    NotContains
+```
 ## Examples
 
 #### Advanced filtering
 ```c#
-queryable.Where(x => ((x.Name.StartsWith("Snickers") || x.Name.Contains("Mars")) && x.ExpireDate >= DateTime.UtcNow) && (x.IsForSale || x.IsInStock))
+Where(x => ((x.Name.EndsWith("Mars") || ["Snickers", "Mars"].Contains(x.Name)) && x.ExpireDate >= DateTime.UtcNow) && (x.IsForSale || x.IsInStock))
 ```
 ```json
 [
@@ -136,14 +152,14 @@ queryable.Where(x => ((x.Name.StartsWith("Snickers") || x.Name.Contains("Mars"))
 			[
 				{
 					"field": "Name",
-					"operator": "StartsWith",
-					"value": ["Snickers"]
+					"operator": "EndsWith",
+					"value": ["Mars"]
 				},
 				{
 					"logic": "Or",
 					"field": "Name",
-					"operator": "Contains",
-					"value": ["Mars"]
+					"operator": "Any",
+					"value": ["Snickers", "Mars"]
 				},
 				{
 					"logic": "And",
@@ -186,7 +202,6 @@ queryable.Where(x => ((x.Name.StartsWith("Snickers") || x.Name.Contains("Mars"))
 	}
 ]
 ```
-
 ## Remark
 
 Such implementation of "Select" was made due to the limitations of anonymous types and should be used as the last operation 

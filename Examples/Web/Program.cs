@@ -1,6 +1,7 @@
 using DynamicFilter;
 using DynamicFilter.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Web.EF;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,7 +14,10 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddScoped(x => new AppDbContextFactory().CreateDbContext());
+builder.Services.AddDbContext<AppDbContext>(x =>
+{
+    x.UseNpgsql("Host=localhost;Port=5432;Database=autofilter;Username=postgres;Password=postgres;TrustServerCertificate=true");
+});
 
 var app = builder.Build();
 
@@ -32,23 +36,20 @@ app.MapControllers();
 
 app.Run();
 
-namespace Web
+[ApiController]
+[Route("[controller]")]
+public class ProductsController : ControllerBase
 {
-    [ApiController]
-    [Route("[controller]")]
-    public class ProductsController : ControllerBase
+    private readonly AppDbContext _dbcontext;
+
+    public ProductsController(AppDbContext dbcontext)
     {
-        private readonly AppDbContext _dbcontext;
+        _dbcontext = dbcontext;
+    }
 
-        public ProductsController(AppDbContext dbcontext)
-        {
-            _dbcontext = dbcontext;
-        }
-
-        [HttpPost("filter")]
-        public IActionResult GetFiltered([FromBody] Operation[] filter)
-        {
-            return Ok(_dbcontext.Set<Product>().ApplyDynamicFilter(filter));
-        }
+    [HttpPost("filter")]
+    public IActionResult GetFiltered([FromBody] Operation[] filter)
+    {
+        return Ok(_dbcontext.Set<Product>().ApplyDynamicFilter(filter));
     }
 }
