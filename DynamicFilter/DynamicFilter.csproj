@@ -5,6 +5,8 @@
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Version>1.0.1</Version>
+    <PackageId>ART4S.DynamicFilter</PackageId>
   </PropertyGroup>
 
   <ItemGroup>

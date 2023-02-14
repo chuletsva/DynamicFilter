@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using DynamicFilter.Arguments;
 using DynamicFilter.Models;
 using Newtonsoft.Json;
