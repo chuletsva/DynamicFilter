@@ -7,6 +7,13 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <Version>1.0.1</Version>
     <PackageId>ART4S.DynamicFilter</PackageId>
+    <Authors>Vyacheslav Chulets</Authors>
+    <Title>ART4S.DynamicFilter</Title>
+    <Product>ART4S.DynamicFilter</Product>
+    <Description>DynamicFilter allows to use essential linq filtering methods on frontend side</Description>
+    <RepositoryUrl>https://github.com/ART4S/DynamicFilter</RepositoryUrl>
+    <PackageTags>filter; filtering; linq; queryable; dynamic-filter</PackageTags>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,6 +24,13 @@
 	<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
 	  <_Parameter1>DynamicProxyGenAssembly2</_Parameter1>
 	</AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENSE.txt">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
