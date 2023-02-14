@@ -1,4 +1,4 @@
-﻿﻿# DynamicFilter
+﻿### DynamicFilter
 ![Nuget](https://img.shields.io/nuget/v/ART4S.DynamicFilter)
 
 DynamicFilter allows to use essential linq filtering methods on frontend side.
@@ -47,7 +47,7 @@ Filter:
 ```json
 [
 	{
-		"name": "Where",
+		"name": "where",
 		"arguments": 
                 {
 			"conditions": 
@@ -68,8 +68,7 @@ Filter:
 		}
 	},
 	{
-		"name": "Distinct",
-		"Arguments": {}
+		"name": "distinct"
 	},
 	{
 		"name": "orderBy",
@@ -140,12 +139,12 @@ At this point following operators are available to use in Where predicate:
 
 #### Advanced filtering
 ```c#
-Where(x => ((x.Name.EndsWith("Mars") || ["Snickers", "Mars"].Contains(x.Name)) && x.ExpireDate >= DateTime.UtcNow) && (x.IsForSale || x.IsInStock))
+.Where(x => ((x.Name.EndsWith("Mars") || ["Snickers", "Mars"].Contains(x.Name)) && x.ExpireDate >= DateTime.UtcNow) && (x.IsForSale || x.IsInStock))
 ```
 ```json
 [
 	{
-		"name": "Where",
+		"name": "where",
 		"arguments": 
 		{
 			"conditions": 
@@ -202,9 +201,28 @@ Where(x => ((x.Name.EndsWith("Mars") || ["Snickers", "Mars"].Contains(x.Name)) &
 	}
 ]
 ```
+```c#
+.Select(x => x.Price)
+.Distinct()
+.OrderBy(x => x)
+```
+```json
+[
+	{
+		"name": "select",
+		"arguments": "Price"
+	},
+	{
+		"name": "distinct"
+	},
+	{
+		"name": "orderBy"
+	}
+]
+```
 ## Remark
 
-Such implementation of "Select" was made due to the limitations of anonymous types and should be used as the last operation 
+Implementation "Select" with Dictionary was made due to the limitations of anonymous types and should be used as the last operation 
 and only to reduce the final number of properties to be fetched from the database.
 
 ## Operations vs Types compatibility
