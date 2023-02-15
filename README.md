@@ -118,6 +118,8 @@ _dbcontext.Set<Product>()
         {"Name", x.Name}
     });
 ```
+> Such implementation of Select was made due to the limitations of anonymous types and should be used as the last operation 
+> and only to reduce the final number of properties to be fetched from the database.
 
 At this point following operators are available to use in Where predicate:
 ```
@@ -222,7 +224,3 @@ At this point following operators are available to use in Where predicate:
 	}
 ]
 ```
-## Remark
-
-Implementation "Select" with Dictionary was made due to the limitations of anonymous types and should be used as the last operation 
-and only to reduce the final number of properties to be fetched from the database.
