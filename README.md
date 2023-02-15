@@ -201,6 +201,8 @@ At this point following operators are available to use in Where predicate:
 	}
 ]
 ```
+
+#### Fetching specific field values
 ```c#
 .Select(x => x.Price)
 .Distinct()
