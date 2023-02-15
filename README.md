@@ -226,9 +226,3 @@ At this point following operators are available to use in Where predicate:
 
 Implementation "Select" with Dictionary was made due to the limitations of anonymous types and should be used as the last operation 
 and only to reduce the final number of properties to be fetched from the database.
-
-## Operations vs Types compatibility
-
-![Compatibility1](https://user-images.githubusercontent.com/24371700/162436461-09717eaa-23d4-4693-af71-eed40aab02ee.png) 
-![Compatibility2](https://user-images.githubusercontent.com/24371700/162436470-3e3db5e0-ab62-4add-bdb1-91664017a4e6.png)
-![Compatibility3](https://user-images.githubusercontent.com/24371700/162436496-2d995028-8e68-48f1-8c67-5698792a5527.png)
