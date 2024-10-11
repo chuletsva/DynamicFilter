@@ -1,7 +1,7 @@
 # DynamicFilter
 [![Nuget](https://img.shields.io/nuget/v/ART4S.DynamicFilter)](https://www.nuget.org/packages/ART4S.DynamicFilter)
 
-DynamicFilter allows to use essential linq filtering methods throughout web api.
+DynamicFilter allows to use essential linq filtering methods in web api apps.
 
 All operations were tested against EF Core and PostgreSql.
 
